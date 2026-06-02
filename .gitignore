@@ -26,8 +26,6 @@ Thumbs.db
 .vscode/
 .idea/
 
-*.png
-
 dataset_old/
 
 app.py
