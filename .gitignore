@@ -29,4 +29,5 @@ Thumbs.db
 dataset_old/
 
 check_env.py
-src/
+source/
+model/
