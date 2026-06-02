@@ -28,7 +28,5 @@ Thumbs.db
 
 dataset_old/
 
-app.py
 check_env.py
-models/
 src/
