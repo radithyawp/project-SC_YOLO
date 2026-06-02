@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 4
+names: ['Home', 'Oil Rafinery', 'Solar Panels', 'mosque']
+
+roboflow:
+  workspace: angahs-workspace
+  project: class-detection-satellit
+  version: 3
+  license: Private
+  url: https://app.roboflow.com/angahs-workspace/class-detection-satellit/3

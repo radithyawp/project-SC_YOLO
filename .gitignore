@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+*.conda/
+
+# YOLO / training outputs
+*.onnx
+*.engine
+data/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+*.png
+
+dataset_old/
+
+app.py
+check_env.py
+models/
+src/

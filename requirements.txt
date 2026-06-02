@@ -1,0 +1,16 @@
+
+---
+
+### `requirements.txt`
+
+```txt
+ultralytics
+streamlit
+torch
+torchvision
+opencv-python
+numpy
+pandas
+pillow
+matplotlib
+pyyaml
