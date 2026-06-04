@@ -16,8 +16,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-MODEL_PATH = Path("models/best.pt")
-STYLE_PATH = Path("src/style.css")
+BASE_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = BASE_DIR.parent
+
+MODEL_PATH = PROJECT_DIR / "models" / "best.pt"
+STYLE_PATH = BASE_DIR / "style.css"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 ORDERED_CLASSES = ["Home", "Oil Refinery", "Solar Panels", "Mosque"]
@@ -34,7 +37,9 @@ DISPLAY_NAMES = {
 # LOADERS
 def load_css():
     if STYLE_PATH.exists():
-        st.markdown(f"<style>{STYLE_PATH.read_text()}</style>", unsafe_allow_html=True)
+        st.markdown(f"<style>{STYLE_PATH.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
+    else:
+        st.warning(f"CSS file not found: {STYLE_PATH}")
 
 @st.cache_resource(show_spinner=False)
 def load_model():
