@@ -1,9 +1,6 @@
 
----
-
 ### `requirements.txt`
 
-```txt
 ultralytics
 streamlit
 torch
