@@ -1,13 +1,10 @@
-
-### `requirements.txt`
-
-ultralytics
 streamlit
+ultralytics
 torch
 torchvision
-opencv-python
 numpy
 pandas
 pillow
-matplotlib
 pyyaml
+opencv-python-headless
+matplotlib
