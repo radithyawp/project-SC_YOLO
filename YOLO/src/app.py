@@ -1,30 +1,14 @@
-# Aplikasi Streamlit untuk deteksi dan counting objek citra satelit menggunakan YOLOv8n
-
-# io digunakan untuk membuat file gambar hasil deteksi ke dalam bentuk bytes agar bisa didownload
 import io
-
-# untuk mengatur lokasi file model
 from pathlib import Path
 
-# untuk mengubah gambar jadi array karena YOLO cuma nerima gambar dalam bentuk array
 import numpy as np
-
-# untuk membuat tabel ringkasan dan detail deteksi
 import pandas as pd
-
-# untuk membuat tampilan web app
 import streamlit as st
-
-# untuk mengecek CUDA apakah tersedia
 import torch
-
-# untuk membaca gambar yang diupload user
 from PIL import Image
-
-# untuk memuat model YOLOv8 dan dan melakukan proses objject detection
 from ultralytics import YOLO
 
-# Konfigurasi halaman, path model, path CSS, dan device
+# CONFIG
 st.set_page_config(
     page_title="Building Detection AI",
     page_icon="🏢",
@@ -36,7 +20,6 @@ MODEL_PATH = Path("models/best.pt")
 STYLE_PATH = Path("src/style.css")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Daftar kelas dan mapping nama agar tampilan konsisten
 ORDERED_CLASSES = ["Home", "Oil Refinery", "Solar Panels", "Mosque"]
 
 DISPLAY_NAMES = {
@@ -48,35 +31,33 @@ DISPLAY_NAMES = {
     "Mosque": "Mosque",
 }
 
-# Memuat CSS eksternal untuk tampilan aplikasi
+# LOADERS
 def load_css():
     if STYLE_PATH.exists():
         st.markdown(f"<style>{STYLE_PATH.read_text()}</style>", unsafe_allow_html=True)
 
-# Memuat model YOLOv8n hasil training
 @st.cache_resource(show_spinner=False)
 def load_model():
     if not MODEL_PATH.exists():
         st.error("Model tidak ditemukan. Pastikan file best.pt ada di folder: models/best.pt")
         st.stop()
+
     return YOLO(str(MODEL_PATH))
 
 load_css()
 model = load_model()
 MODEL_NAMES = model.names
 
-# Menyamakan nama kelas dari model ke nama tampilan
+# HELPER FUNCTIONS
 def normalize_class_name(raw_name: str) -> str:
     return DISPLAY_NAMES.get(raw_name, raw_name)
 
-# Mengubah gambar hasil deteksi menjadi bytes untuk download
 def image_to_buffer(image_array: np.ndarray) -> bytes:
     image = Image.fromarray(image_array)
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     return buffer.getvalue()
 
-# Menjalankan prediksi YOLOv8 pada gambar input
 def run_prediction(image_np: np.ndarray, confidence: float):
     results = model.predict(
         source=image_np,
@@ -85,9 +66,9 @@ def run_prediction(image_np: np.ndarray, confidence: float):
         device=0 if DEVICE == "cuda" else "cpu",
         verbose=False
     )
+
     return results[0]
 
-# Membaca hasil prediksi, menghitung objek per kelas, dan menyimpan detail deteksi
 def parse_detection_result(result):
     counts = {class_name: 0 for class_name in ORDERED_CLASSES}
     detection_rows = []
@@ -96,6 +77,7 @@ def parse_detection_result(result):
         class_id = int(box.cls[0])
         raw_class_name = MODEL_NAMES[class_id]
         class_name = normalize_class_name(raw_class_name)
+
         confidence_score = float(box.conf[0])
         x1, y1, x2, y2 = box.xyxy[0].tolist()
 
@@ -114,7 +96,7 @@ def parse_detection_result(result):
 
     return counts, detection_rows
 
-# Menampilkan sidebar informasi project
+# UI COMPONENTS
 def render_sidebar():
     with st.sidebar:
         st.markdown('<div class="sidebar-header">Project Information</div>', unsafe_allow_html=True)
@@ -158,7 +140,6 @@ def render_sidebar():
         st.markdown("---")
         st.caption("v1.0 • YOLOv8 Building Detection AI")
 
-# Menampilkan header utama aplikasi
 def render_header():
     st.markdown("""
         <div class="main-header">
@@ -167,7 +148,6 @@ def render_header():
         </div>
     """, unsafe_allow_html=True)
 
-# Membuat judul section
 def render_section(title: str, icon: str):
     st.markdown(f"""
         <div class="section-header">
@@ -175,25 +155,30 @@ def render_section(title: str, icon: str):
         </div>
     """, unsafe_allow_html=True)
 
-# Menampilkan jumlah objek per kelas
 def render_metrics(counts: dict):
     render_section("Detection Results", "bi-bar-chart-line")
+
     cols = st.columns(4)
 
     for col, class_name in zip(cols, ORDERED_CLASSES):
         with col:
             st.metric(class_name, counts[class_name])
 
-# Menampilkan gambar asli, hasil deteksi, dan tabel summary/detail
+
 def render_tabs(image_np, annotated_rgb, counts, detection_rows, total_detected):
     render_section("Visualization Results", "bi-images")
+
     tab1, tab2, tab3 = st.tabs(["Original Image", "Detection Result", "Detection Summary"])
 
     with tab1:
         st.image(image_np, caption="Original Satellite Image", width="stretch")
 
     with tab2:
-        st.image(annotated_rgb, caption=f"Detected {total_detected} object(s)", width="stretch")
+        st.image(
+            annotated_rgb,
+            caption=f"Detected {total_detected} object(s)",
+            width="stretch"
+        )
 
     with tab3:
         summary_df = pd.DataFrame({
@@ -211,7 +196,7 @@ def render_tabs(image_np, annotated_rgb, counts, detection_rows, total_detected)
         else:
             st.info("Tidak ada objek yang terdeteksi pada confidence threshold ini.")
 
-# Menampilkan banner sukses setelah deteksi selesai
+
 def render_success_banner(total_detected: int):
     st.markdown(f"""
         <div class="success-banner">
@@ -220,28 +205,25 @@ def render_success_banner(total_detected: int):
         </div>
     """, unsafe_allow_html=True)
 
-# Alur utama aplikasi
+# MAIN APP
 render_sidebar()
 render_header()
+
 render_section("Upload Satellite Image", "bi-satellite")
 
-# Upload gambar input
 uploaded_file = st.file_uploader(
     "Drop your satellite image here or click to browse",
     type=["png", "jpg", "jpeg", "tif", "tiff"],
     help="Supported formats: PNG, JPG, JPEG, TIF, TIFF"
 )
 
-# Berhenti jika belum ada gambar
 if uploaded_file is None:
     st.info("Upload gambar satelit atau screenshot Google Earth untuk memulai deteksi.")
     st.stop()
 
-# Membaca gambar dan mengubahnya menjadi NumPy array
 image = Image.open(uploaded_file).convert("RGB")
 image_np = np.array(image)
 
-# Slider confidence threshold
 confidence = st.slider(
     "Confidence Threshold",
     min_value=0.10,
@@ -251,18 +233,14 @@ confidence = st.slider(
     help="Naikkan jika terlalu banyak false detection. Turunkan jika objek banyak yang tidak terdeteksi."
 )
 
-# Menjalankan deteksi YOLOv8
 with st.spinner("Detecting objects with YOLOv8..."):
     result = run_prediction(image_np, confidence)
 
-# Membuat gambar hasil deteksi dengan bounding box
 annotated_rgb = result.plot()[..., ::-1]
 
-# Menghitung objek dan mengambil detail deteksi
 counts, detection_rows = parse_detection_result(result)
 total_detected = sum(counts.values())
 
-# Menampilkan hasil ke aplikasi
 st.markdown("---")
 render_metrics(counts)
 
@@ -271,7 +249,6 @@ render_tabs(image_np, annotated_rgb, counts, detection_rows, total_detected)
 
 render_success_banner(total_detected)
 
-# Tombol download gambar hasil deteksi
 st.download_button(
     label="⬇ Download Detection Result",
     data=image_to_buffer(annotated_rgb),
