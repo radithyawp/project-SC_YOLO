@@ -1,10 +1,10 @@
 streamlit
-ultralytics
+ultralytics==8.4.66
 torch
 torchvision
 numpy
 pandas
 pillow
 pyyaml
-opencv-python-headless
 matplotlib
+opencv-python-headless
